@@ -1494,7 +1494,7 @@ end subroutine micro_print
         reffc(I,j,k) = top/bottom
         rmean(I,j,k) = rmeant1/rmeant2
         do kr = 1, nkr
-        top2 = top2+ffcd(I,j,k,KR)*rhocgs(k)/XL(KR)*(DROPRADII(KR)-rmean(I,j,k))**2        
+        top2 = top2+ffcd(I,j,k,KR)*rhocgs(k)/XL(KR)*(DROPRADII(KR)-rmean(I,j,k))**2           
         end do
         rsigc(I,j,k) = (top2/rmeant2)**0.5
         rel_dis(I,j,k) = rsigc(I,j,k)/rmean(I,j,k)
@@ -3287,8 +3287,8 @@ enddo
 ! By ST 11/14/2018
 ! Modified by Fan Yang 11/27/2020
 !*****************************************************
-offset_f = 0
-offset_b = 0
+offset_f = 2
+offset_b = 2
 nc_b = 0.0
 na_b = 0.0
 rmean_b = 0.0

@@ -141,8 +141,8 @@ integer :: xsb,xeb,ysb,yeb,zsb,zeb
 real :: aa1_my, bb1_my
 real :: relh_up, relh_down
 !*********************************************************************
-!integer :: counter_b
-!integer :: total_counter_b
+! integer :: counter_b
+! integer :: total_counter_b
 !*********************************************************************
 !========================================================================
     call t_startf('statistics')
@@ -153,8 +153,8 @@ real :: relh_up, relh_down
 ! Added by Subin Thomas on 11/12/2018
 ! Modified by Fan Yang on 11/21/2020 
 !========================================================================
-    offset_f = 0
-    offset_b = 0
+    offset_f = 2
+    offset_b = 2
 
     aa1_my = 2.53e12
     bb1_my = 5.42e3
@@ -244,7 +244,7 @@ real :: relh_up, relh_down
 	            !tke_b(k)= tke_b(k) + 0.5*((u(i,j,k)-u0(k))*(u(i,j,k)-u0(k))+(v(i,j,k)-v0(k))*(v(i,j,k)-v0(k))*YES3D+0.5*(w(i,j,k+1)+w(i,j,k))*(w(i,j,k+1)+w(i,j,k)))
 	            tke_b(k)= tke_b(k) + 0.5*((u(i,j,k)-u0(k))*(u(i,j,k)-u0(k))+(v(i,j,k)-v0(k))*(v(i,j,k)-v0(k))*YES3D+0.5*(w(i,j,k+1)**2+w(i,j,k)**2))
                 relh_up = qv(i,j,k)*pres(k)/(0.622+0.378*qv(i,j,k))*1.0e3
-                relh_down = aa1_my*dexp(-bb1_my/tabs(i,j,k))
+                relh_down = aa1_my*exp(-bb1_my/tabs(i,j,k))
                 !print*,"test",relh_up,relh_down,relh_up/relh_down
 	            !relh_b(k)=relh_b(k)+qv(i,j,k)/qsatw(tabs(i,j,k),pres(k))
                 relh_b(k) = relh_b(k) + relh_up/relh_down

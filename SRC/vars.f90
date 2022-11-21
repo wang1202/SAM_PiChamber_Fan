@@ -40,7 +40,7 @@ real dwdt   (nx, ny, nz,  3)
 ! FY @ MTU 2017
 real fluxbu (nx, ny), fluxbv (nx, ny), fluxbt (nx, ny)
 real fluxbq (nx, ny), fluxtu (nx, ny), fluxtv (nx, ny)
-real fluxtt (nx, ny), fluxtq (nx, ny), fzero  (nx, ny)
+real fluxtt (nx, ny), fluxtq (nx, ny), fzerotb (nx, ny)
 real precsfc(nx,ny) ! surface precip. rate
 real shobt(nx, ny), shott(nx, ny)! Old surface fluxes
 real Nusseltbot(nx, ny) !Nusselt number
@@ -48,13 +48,13 @@ real Nusseltbot(nx, ny) !Nusselt number
 ! FY @ MTU 2017
 real fluxlv (ny, nzm), fluxlw (ny, nzm), fluxlt (ny, nzm)
 real fluxlq (ny, nzm), fluxrv (ny, nzm), fluxrw (ny, nzm)
-real fluxrt (ny, nzm), fluxrq (ny, nzm)
+real fluxrt (ny, nzm), fluxrq (ny, nzm), fzerolr (ny, nzm)
 
 ! fluxes at the front and back wall of the domain for pi chamber -- FY
 ! FY @ MTU 2017
 real fluxqw (nx, nzm), fluxqu (nx, nzm), fluxqt (nx, nzm)
 real fluxqq (nx, nzm), fluxhw (nx, nzm), fluxhu (nx, nzm)
-real fluxht (nx, nzm), fluxhq (nx, nzm)
+real fluxht (nx, nzm), fluxhq (nx, nzm), fzeroqh (nx, nzm)
 
                 
 !-----------------------------------------------------------------

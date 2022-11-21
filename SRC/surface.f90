@@ -45,17 +45,17 @@ if(.not.SFC_FLX_FXD) then
        call oceflx(pres(nzm),u0(nzm)+ug, v0(nzm)+vg,t0(nzm)-gamaz(nzm), q0(nzm),t0(nzm),z(nzm),&
                           sttxy(1,1)+t00, fluxt0, fluxq0, taux0, tauy0, q_s)
        if(SFC_TAU_FXD) then
-         u_h0 = max(1.,sqrt((u0(1)+ug)**2+(v0(1)+vg)**2))
-         taux0 = -(u0(1)+ug)/u_h0*tau0*rhow(1)
-         tauy0 = -(v0(1)+vg)/u_h0*tau0*rhow(1)
+         u_h0 = max(1.,sqrt((u0(nzm)+ug)**2+(v0(nzm)+vg)**2))
+         taux0 = -(u0(nzm)+ug)/u_h0*tau0*rhow(nz)
+         tauy0 = -(v0(nzm)+vg)/u_h0*tau0*rhow(nz)
        else
-         tau0=sqrt( taux0**2 +  tauy0**2)/rhow(nzm)
+         tau0=sqrt( taux0**2 +  tauy0**2)/rhow(nz)
        end if
 
        fluxtt(:,:) = fluxt0
        fluxtq(:,:) = fluxq0
-       fluxtu(:,:) = taux0/rhow(nzm)
-       fluxtv(:,:) = tauy0/rhow(nzm)
+       fluxtu(:,:) = taux0/rhow(nz)
+       fluxtv(:,:) = tauy0/rhow(nz)
     end if ! LES
 
     if(CEM) then
@@ -118,9 +118,9 @@ if(.not.SFC_FLX_FXD) then
 
                if (CNS_FLX) then
 ! constant surface flux
-                 call landflx(pres(1),(t0(1)-gamaz(1))*coef1, t_s,     &
+                 call landflx((t0(1)-gamaz(1))*coef1, t_s,     &
                       q0(1), q_s, u0(1)+ug, v0(1)+vg, z(1), z0,      &
-                      fluxt0, fluxq0, taux0, tauy0, xlmo)
+                      fluxt0, fluxq0, taux0, tauy0)
                  if(SFC_TAU_FXD) then
                    u_h0 = max(1.,sqrt((u0(1)+ug)**2+(v0(1)+vg)**2))
                    taux0 = -(u0(1)+ug)/u_h0*tau0*rhow(1)
@@ -130,33 +130,33 @@ if(.not.SFC_FLX_FXD) then
                  end if
                  fluxbt(:,:) = fluxt0
                  fluxbq(:,:) = fluxq0
-                 fluxbu(:,:) = taux0/rhow(1)
-                 fluxbv(:,:) = tauy0/rhow(1)
+                 fluxbu(:,:) = taux0
+                 fluxbv(:,:) = tauy0
                 
                else
 ! non-constant surface flux
                  qvs(0:nx,1-YES3D:ny) = micro_field(0:nx,1-YES3D:ny,1,index_water_vapor)
                  do j=1,ny
                    do i=1,nx
-                     call landflx(pres(1),(t(i,j,1)-gamaz(1))*coef1, t_s,  &
+                     call landflx((t(i,j,1)-gamaz(1))*coef1, t_s,  &
                        qv(i,j,1), q_s, 0.5*(u(i+1,j,1)+u(i,j,1))+ug,       &
                        0.5*(v(i,j+YES3D,1)+v(i,j,1))+vg, z(1), z0,         &
-                       fluxt0, fluxq0, taux0, tauy0, xlmo)
+                       fluxt0, fluxq0, taux0, tauy0)
                      fluxbt(i,j) = fluxt0
                      fluxbq(i,j) = fluxq0
 
-               call landflx(pres(1),(0.5*(t(i,j,1)+t(i-1,j,1))-gamaz(1))*coef1, & 
+               call landflx((0.5*(t(i,j,1)+t(i-1,j,1))-gamaz(1))*coef1, & 
                       t_s, 0.5*(qvs(i,j)+qvs(i-1,j)), q_s, u(i,j,1)+ug,     &
                       0.25*(v(i-1,j+YES3D,1)+v(i-1,j,1)+v(i,j+YES3D,1)+v(i,j,1))+vg, &
-                      z(1), z0,fluxt0, fluxq0, taux0, tauy0, xlmo)
-               fluxbu(i,j)=taux0/rhow(1)
+                      z(1), z0,fluxt0, fluxq0, taux0, tauy0)
+               fluxbu(i,j)=taux0
                
-               call landflx(pres(1),(0.5*(t(i,j-YES3D,1)+t(i,j,1))-gamaz(1))*coef1, & 
+               call landflx((0.5*(t(i,j-YES3D,1)+t(i,j,1))-gamaz(1))*coef1, & 
                       t_s, 0.5*(qvs(i,j-YES3D)+qvs(i,j)), q_s, &
                       0.25*(u(i,j,1)+u(i+1,j,1)+u(i,j-YES3D,1)+u(i+1,j-YES3D,1))+ug, &
                       v(i,j,1)+vg, &
-                      z(1), z0,fluxt0, fluxq0, taux0, tauy0, xlmo)
-               fluxbv(i,j)=tauy0/rhow(1)
+                      z(1), z0,fluxt0, fluxq0, taux0, tauy0)
+               fluxbv(i,j)=tauy0
                end do
                end do
                end if
@@ -164,26 +164,26 @@ if(.not.SFC_FLX_FXD) then
 ! top flux add for pi chamber
 ! FY @ MTU 2017
                soil_wetness=1.0
-               coef = (1000./pres0)**(rgas/cp)
+               coef = (1000./(pres(nzm)+0.5*(pres(nzm)-pres(nzm-1))))**(rgas/cp)
                coef1 = (1000./pres(nzm))**(rgas/cp)
                t_s = (sttxy(1,1)+t00)*coef
                q_s = soil_wetness*qsatw(sttxy(1,1)+t00,pres(nzm))
                if (CNS_FLX) then
 ! constant top surface flux
-                 call landflx(pres(nzm),(t0(nzm)-gamaz(nzm))*coef1, t_s,     &
+                 call landflx((t0(nzm)-gamaz(nzm))*coef1, t_s,     &
                       q0(nzm), q_s, u0(nzm)+ug, v0(nzm)+vg, z(1), z0,      &
-                      fluxt0, fluxq0, taux0, tauy0, xlmo)
+                      fluxt0, fluxq0, taux0, tauy0)
                  if(SFC_TAU_FXD) then
                    u_h0 = max(1.,sqrt((u0(nzm)+ug)**2+(v0(nzm)+vg)**2))
-                   taux0 = -(u0(nzm)+ug)/u_h0*tau0*rhow(nzm)
-                   tauy0 = -(v0(nzm)+vg)/u_h0*tau0*rhow(nzm)
+                   taux0 = -(u0(nzm)+ug)/u_h0*tau0
+                   tauy0 = -(v0(nzm)+vg)/u_h0*tau0
                  else
-                   tau0=sqrt( taux0**2 +  tauy0**2)/rhow(nzm)
+                   tau0=sqrt( taux0**2 +  tauy0**2)
                  end if
                  fluxtt(:,:) = - fluxt0
                  fluxtq(:,:) = - fluxq0
-                 fluxtu(:,:) = - taux0/rhow(1) 
-                 fluxtv(:,:) = - tauy0/rhow(1)
+                 fluxtu(:,:) = - taux0
+                 fluxtv(:,:) = - tauy0
                else
 ! non-constant top surface flux
                  qvs(0:nx,1-YES3D:ny) = micro_field(0:nx,1-YES3D:ny,nzm,index_water_vapor)
@@ -193,24 +193,24 @@ if(.not.SFC_FLX_FXD) then
                    do i=1,nx
                      ib = max(1,i-1)
                      it = min(nx,i+1)
-                     call landflx(pres(nzm),t_s,(t(i,j,nzm)-gamaz(nzm))*coef1,  &
+                     call landflx(t_s,(t(i,j,nzm)-gamaz(nzm))*coef1,  &
                        q_s,qv(i,j,nzm), 0.5*(u(it,j,nzm)+u(i,j,nzm))+ug,       &
                        0.5*(v(i,jt,nzm)+v(i,j,nzm))+vg, z(1), z0,          &
-                       fluxt0, fluxq0, taux0, tauy0, xlmo)
+                       fluxt0, fluxq0, taux0, tauy0)
                      fluxtt(i,j) = fluxt0
                      fluxtq(i,j) = fluxq0
-                     call landflx(pres(nzm),t_s,(0.5*(t(i,j,nzm)+t(ib,j,nzm))-gamaz(nzm))*coef1, & 
+                     call landflx(t_s,(0.5*(t(i,j,nzm)+t(ib,j,nzm))-gamaz(nzm))*coef1, & 
                        q_s, 0.5*(qvs(i,j)+qvs(i-1,j)), u(i,j,nzm)+ug,     &
                        0.25*(v(ib,jt,nzm)+v(ib,j,nzm)+v(i,jt,nzm)+v(i,j,nzm))+vg, &
-                       z(1), z0,fluxt0, fluxq0, taux0, tauy0, xlmo)
-                     fluxtu(i,j)= -taux0/rhow(nzm)
+                       z(1), z0,fluxt0, fluxq0, taux0, tauy0)
+                     fluxtu(i,j)= -taux0
                
-                     call landflx(pres(nzm),t_s,(0.5*(t(i,j-YES3D,nzm)+t(i,j,nzm))-gamaz(nzm))*coef1, & 
+                     call landflx(t_s,(0.5*(t(i,j-YES3D,nzm)+t(i,j,nzm))-gamaz(nzm))*coef1, & 
                        q_s, 0.5*(qvs(i,j-YES3D)+qvs(i,j)), &
                        0.25*(u(i,j,nzm)+u(it,j,nzm)+u(i,jb,nzm)+u(it,jb,nzm))+ug, &
                        v(i,j,nzm)+vg, &
-                       z(1), z0,fluxt0, fluxq0, taux0, tauy0, xlmo)
-                       fluxtv(i,j)= -tauy0/rhow(nzm)
+                       z(1), z0,fluxt0, fluxq0, taux0, tauy0)
+                       fluxtv(i,j)= -tauy0
                      end do
                    end do
                  end if
@@ -222,35 +222,35 @@ if(dowallx) then
 ! left wall flux
    qvy(1-YES3D:ny,:) = micro_field(1,1-YES3D:ny,:,index_water_vapor)
 ! set soil_wetness to 0.0 for dry side walls
-  soil_wetness= 0.53
+  soil_wetness= 0.62
   if(mod(rank,nsubdomains_x).eq.0) then
     do k=1,nzm
      kb = max(1,k-1)   
      do j=1,ny
        jb = max(1,j-YES3D)
        jt = min(ny,j+YES3D)
-       coef = (1000./pres0)**(rgas/cp)     ! AW: this assumes that the pressure at the wall is the same as lower boundary
+       coef = (1000./pres(k))**(rgas/cp)     ! AW: this assumes that the pressure at the wall is the same as lower boundary
        coef1 = (1000./pres(k))**(rgas/cp)
        t_s = tabs_w*coef                   ! AW: see above.  For the side wall it should be mutiplied by coef1.
        q_s = soil_wetness*qsatw(tabs_w,pres(k))
-       call landflxSW(pres(k),(t(1,j,k)-gamaz(k))*coef1, t_s, & ! AW: so t_h and t_s are different, not neutral.
+       call landflxSW((t(1,j,k)-gamaz(k))*coef1, t_s, & ! AW: so t_h and t_s are different, not neutral.
                    qv(1,j,k), q_s, 0.5*(v(1,j,k)+v(1,jt,k)), &
                    0.5*(w(1,j,k)+w(1,j,k+1)),z(1),z0, &
-                   fluxt0, fluxq0, taux0, tauy0, xlmo)
+                   fluxt0, fluxq0, taux0, tauy0)
        fluxlt(j,k) = fluxt0
        fluxlq(j,k) = fluxq0
-       call landflxSW(pres(k),(0.5*(t(1,j,k)+t(1,jb,k))-gamaz(k))*coef1, & ! AW: for V-grid
+       call landflxSW((0.5*(t(1,j,k)+t(1,jb,k))-gamaz(k))*coef1, & ! AW: for V-grid
             t_s, 0.5*(qvy(j,k)+qvy(j-YES3D,k)), q_s, v(i,j,k)+vg,     &  ! AW: why is t and qvy treated differently as j = 1?
             0.25*(w(1,jb,k)+w(1,jb,k+1)+w(1,j,k+1)+w(1,j,k)), &
-            z(1), z0,fluxt0, fluxq0, taux0, tauy0, xlmo)
-       fluxlv(j,k)=taux0/rhow(k)
+            z(1), z0,fluxt0, fluxq0, taux0, tauy0)
+       fluxlv(j,k)=taux0
 
-       call landflxSW(pres(k),(0.5*(t(1,j,k)+t(1,j,kb))-gamaz(k))*coef1, & ! AW: for W-grid
+       call landflxSW((0.5*(t(1,j,k)+t(1,j,kb))-gamaz(k))*coef1, & ! AW: for W-grid
             t_s, 0.5*(qvy(j,k)+qvy(j,kb)), q_s, &
             0.25*(v(1,j,k)+v(1,j,kb)+v(1,jt,k)+v(1,jt,kb))+vg, &
             w(1,j,k), &
-            z(1), z0,fluxt0, fluxq0, taux0, tauy0, xlmo)
-       fluxlw(j,k)=tauy0/rhow(k)
+            z(1), z0,fluxt0, fluxq0, taux0, tauy0)
+       fluxlw(j,k)=tauy0
      end do
     end do
   end if
@@ -263,30 +263,30 @@ if(dowallx) then
      do j=1,ny
        jb = max(1,ny-YES3D)
        jt = min(ny,ny+YES3D)
-       coef = (1000./pres0)**(rgas/cp)
+       coef = (1000./pres(k))**(rgas/cp)
        coef1 = (1000./pres(k))**(rgas/cp)
        t_s = tabs_w*coef
        q_s = soil_wetness*qsatw(tabs_w,pres(k))
        t_f = max(t_s,(t(nx,j,k)-gamaz(k))*coef1)
        q_f = max(q_s,qv(nx,j,k))
-       call landflxSW(pres(k),(t(nx,j,k)-gamaz(k))*coef1, t_s, &
+       call landflxSW((t(nx,j,k)-gamaz(k))*coef1, t_s, &
                    qv(nx,j,k), q_s, 0.5*(v(nx,j,k)+v(nx,jt,k)), &
                    0.5*(w(nx,j,k)+w(nx,j,k+1)),z(1),z0, &
-                   fluxt0, fluxq0, taux0, tauy0, xlmo)
+                   fluxt0, fluxq0, taux0, tauy0)
        fluxrt(j,k) = - fluxt0
        fluxrq(j,k) = - fluxq0
-       call landflxSW(pres(k),(0.5*(t(nx,j,k)+t(nx,jb,k))-gamaz(k)*coef1), & 
+       call landflxSW((0.5*(t(nx,j,k)+t(nx,jb,k))-gamaz(k)*coef1), & 
             t_s, 0.5*(qvy(j,k)+qvy(j-YES3D,k)), q_s, v(nx,j,k)+vg,     &
             0.25*(w(nx,jb,k)+w(nx,jb,k+1)+w(nx,j,k+1)+w(nx,j,k)), &
-            z(1), z0,fluxt0, fluxq0, taux0, tauy0, xlmo)
-       fluxrv(j,k)=-taux0/rhow(k)
+            z(1), z0,fluxt0, fluxq0, taux0, tauy0)
+       fluxrv(j,k)=-taux0
 
-       call landflxSW(pres(k),(0.5*(t(nx,j,k)+t(nx,j,kb))-gamaz(k))*coef1, & 
+       call landflxSW((0.5*(t(nx,j,k)+t(nx,j,kb))-gamaz(k))*coef1, & 
             t_s, 0.5*(qvy(j,k)+qvy(j,kb)), q_s, &
             0.25*(v(nx,j,k)+v(nx,j,kb)+v(nx,jt,k)+v(nx,jt,kb))+vg, &
             w(nx,j,k), &
-            z(1), z0,fluxt0, fluxq0, taux0, tauy0, xlmo)
-       fluxrw(j,k)=-tauy0/rhow(k)
+            z(1), z0,fluxt0, fluxq0, taux0, tauy0)
+       fluxrw(j,k)=-tauy0
      end do
     end do
   end if
@@ -298,7 +298,7 @@ if(dowally) then
 ! front wall flux
 ! soil_Wetness set to 0.0 for side walls, to assume it is not saturated
 ! ST 2018
-  soil_wetness= 0.53
+  soil_wetness= 0.62
   if(rank.lt.nsubdomains_x) then   
     qvx(0:nx,:) = micro_field(0:nx,1,:,index_water_vapor)
 
@@ -312,23 +312,23 @@ if(dowally) then
        coef1 = (1000./pres(k))**(rgas/cp)
        t_s = tabs_w*coef
        q_s = soil_wetness*qsatw(tabs_w,pres(k))
-       call landflxSW(pres(k),(t(i,1,k)-gamaz(k))*coef1, t_s, &
+       call landflxSW((t(i,1,k)-gamaz(k))*coef1, t_s, &
                    qv(i,1,k), q_s, 0.5*(w(i,1,k)+w(i,1,k+1)), &
                    0.5*(u(i,1,k)+u(it,1,k)),z(1),z0, &
-                   fluxt0, fluxq0, taux0, tauy0, xlmo)
+                   fluxt0, fluxq0, taux0, tauy0)
        fluxqt(i,k) = fluxt0
        fluxqq(i,k) = fluxq0
-       call landflxSW(pres(k),(0.5*(t(i,1,k)+t(i,1,kb))-gamaz(k))*coef1, & 
+       call landflxSW((0.5*(t(i,1,k)+t(i,1,kb))-gamaz(k))*coef1, & 
             t_s, 0.5*(qvx(i,k)+qvx(i,kb)), q_s, w(i,1,k),     &
             0.25*(u(i,1,k)+u(it,1,k)+u(it,1,kb)+u(i,1,kb))+ug, &
-            z(1), z0,fluxt0, fluxq0, taux0, tauy0, xlmo)
-       fluxqw(i,k)=taux0/rhow(k)
-       call landflxSW(pres(k),(0.5*(t(i,1,k)+t(i-1,1,k))-gamaz(k))*coef1, & 
+            z(1), z0,fluxt0, fluxq0, taux0, tauy0)
+       fluxqw(i,k)=taux0
+       call landflxSW((0.5*(t(i,1,k)+t(i-1,1,k))-gamaz(k))*coef1, & 
             t_s, 0.5*(qvx(i,k)+qvx(i-1,k)), q_s, &
             0.25*(w(i,1,k)+w(i,1,k+1)+w(ib,1,k)+w(ib,1,k+1)), &
             u(i,1,k)+ug, &
-            z(1), z0,fluxt0, fluxq0, taux0, tauy0, xlmo)
-       fluxqu(i,k)=tauy0/rhow(k)
+            z(1), z0,fluxt0, fluxq0, taux0, tauy0)
+       fluxqu(i,k)=tauy0
      end do
     end do
   end if
@@ -345,23 +345,23 @@ if(dowally) then
        coef1 = (1000./pres(k))**(rgas/cp)
        t_s = tabs_w*coef
        q_s = soil_wetness*qsatw(tabs_w,pres(k))
-       call landflxSW(pres(k),(t(i,ny,k)-gamaz(k))*coef1, t_s, &
+       call landflxSW((t(i,ny,k)-gamaz(k))*coef1, t_s, &
                    qv(i,ny,k), q_s, 0.5*(w(i,ny,k)+w(i,ny,kt)), &
                    0.5*(u(i,ny,k)+u(it,ny,k)),z(1),z0, &
-                   fluxt0, fluxq0, taux0, tauy0, xlmo)
+                   fluxt0, fluxq0, taux0, tauy0)
        fluxht(i,k) = - fluxt0
        fluxhq(i,k) = - fluxq0
-       call landflxSW(pres(k),(0.5*(t(i,ny,k)+t(i,ny,kb))-gamaz(k))*coef1, & 
+       call landflxSW((0.5*(t(i,ny,k)+t(i,ny,kb))-gamaz(k))*coef1, & 
             t_s, 0.5*(qvx(i,k)+qvx(i,kb)), q_s, w(i,ny,k),     &
             0.25*(u(i,ny,k)+u(it,ny,k)+u(it,ny,kb)+u(i,ny,kb))+ug, &
-            z(1), z0,fluxt0, fluxq0, taux0, tauy0, xlmo)
-       fluxhw(i,k)= - taux0/rhow(k)
-       call landflxSW(pres(k),(0.5*(t(ib,ny,k)+t(i,ny,k))-gamaz(k))*coef1, & 
+            z(1), z0,fluxt0, fluxq0, taux0, tauy0)
+       fluxhw(i,k)= - taux0
+       call landflxSW((0.5*(t(ib,ny,k)+t(i,ny,k))-gamaz(k))*coef1, & 
             t_s, 0.5*(qvx(i-1,k)+qvx(i,k)), q_s, &
             0.25*(w(i,ny,k)+w(i,ny,k+1)+w(ib,ny,k)+w(ib,ny,k+1)), &
             u(i,ny,k)+ug, &
-            z(1), z0,fluxt0, fluxq0, taux0, tauy0, xlmo)
-       fluxhu(i,k)= - tauy0/rhow(k)
+            z(1), z0,fluxt0, fluxq0, taux0, tauy0)
+       fluxhu(i,k)= - tauy0
      end do
     end do
   end if
@@ -382,40 +382,40 @@ end if
 
                t_s = (sstxy(i,j)+t00)*coef
                q_s = soil_wetness*qsatw(sstxy(i,j)+t00,pres(1))
-               call landflx(pres(1),(t(i,j,1)-gamaz(1))*coef1, t_s,   &
+               call landflx((t(i,j,1)-gamaz(1))*coef1, t_s,   &
                       qv(i,j,1), q_s, 0.5*(u(i+1,j,1)+u(i,j,1))+ug,     &
                         0.5*(v(i,j+YES3D,1)+v(i,j,1))+vg, z(1), z0,        &
-                      fluxt0, fluxq0, taux0, tauy0, xlmo)
+                      fluxt0, fluxq0, taux0, tauy0)
                fluxbt(i,j) = fluxt0
                fluxbq(i,j) = fluxq0
 
                t_s = (0.5*(sstxy(i-1,j)+sstxy(i,j))+t00)*coef
                q_s = soil_wetness*qsatw(0.5*(sstxy(i-1,j)+sstxy(i,j))+t00,pres(1))
-               call landflx(pres(1),(0.5*(t(i-1,j,1)+t(i,j,1))-gamaz(1))*coef1, t_s,   &
+               call landflx((0.5*(t(i-1,j,1)+t(i,j,1))-gamaz(1))*coef1, t_s,   &
                       0.5*(qvs(i-1,j)+qvs(i,j)), q_s, u(i,j,1)+ug,     &
                         0.25*(v(i-1,j+YES3D,1)+v(i-1,j,1)+v(i,j+YES3D,1)+v(i,j,1))+vg, &
-                       z(1), z0, fluxt0, fluxq0, taux0, tauy0, xlmo)
+                       z(1), z0, fluxt0, fluxq0, taux0, tauy0)
                if(SFC_TAU_FXD) then
                    u_h0 = max(1.,sqrt((u(i,j,1)+ug)**2+ &
                         (0.25*(v(i-1,j+YES3D,1)+v(i-1,j,1)+v(i,j+YES3D,1)+v(i,j,1))+vg)**2))
                    taux0 = -(u(i,j,1)+ug)/u_h0*tau0*rhow(1)
                end if
-               fluxbu(i,j) = taux0/rhow(1)
+               fluxbu(i,j) = taux0
 
                t_s = (0.5*(sstxy(i,j-YES3D)+sstxy(i,j))+t00)*coef
                q_s = soil_wetness*qsatw(0.5*(sstxy(i,j-YES3D)+sstxy(i,j))+t00,pres(1))
-               call landflx(pres(1),(0.5*(t(i,j-YES3D,1)+t(i,j,1))-gamaz(1))*coef1, t_s,   &
+               call landflx((0.5*(t(i,j-YES3D,1)+t(i,j,1))-gamaz(1))*coef1, t_s,   &
                       0.5*(qvs(i,j-YES3D)+qvs(i,j)), q_s,  &
                       0.25*(u(i+1,j-YES3D,1)+u(i,j-YES3D,1)+u(i+1,j,1)+u(i,j,1))+ug,     &
                       v(i,j,1)+vg, &
-                      z(1), z0, fluxt0, fluxq0, taux0, tauy0, xlmo)
+                      z(1), z0, fluxt0, fluxq0, taux0, tauy0)
                if(SFC_TAU_FXD) then
                   u_h0 = max(1.,sqrt( &
                        (0.25*(u(i+1,j-YES3D,1)+u(i,j-YES3D,1)+u(i+1,j,1)+u(i,j,1))+ug)**2+ &
                        (v(i,j,1)+vg)**2))
                   tauy0 = -(v(i,j,1)+vg)/u_h0*tau0*rhow(1)
                end if
-               fluxbv(i,j) = tauy0/rhow(1)
+               fluxbv(i,j) = tauy0
 
                end do
               end do

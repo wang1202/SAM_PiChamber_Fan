@@ -7,7 +7,9 @@ subroutine init()
 
   implicit none
 
-  fzero = 0.
+  fzerotb = 0.
+  fzerolr = 0.
+  fzeroqh = 0.
  
   ttend = 0.
   qtend = 0.

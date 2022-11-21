@@ -1,121 +1,136 @@
 
-! Monin-Obukhov Similarity
-! Coded by Marat Khairoutdinov (C) 2003
+! Monin-Obukhov Similarity for land
+! Coded using description document  LSM4 in CESM  
+! (C) Marat Khairoutdinov, Oct 2016
 
+subroutine landflxSW(th, ts, qh, qs, uh, vh, h, z0, shf, lhf, taux, tauy)
 
-subroutine landflxSW(p0, th, ts, qh, qs, uh, vh, h, z0, shf, lhf, taux, tauy, xlmo)
+use grid, only: dtn
 
-use params, only: epsv
 implicit none
 
 ! Input:
 
-real p0   ! surface pressure, mb
-real th   ! pot. temperature at height h
-real ts   ! pot. Temperature at z0
-real qh   ! vapor at height h
-real qs   ! vapor at z0
-real uh   ! zonal wind at height h
-real vh   ! merid wind at height h
-real h    ! height h
-real z0   ! friction height
-        
+real th   ! pot. temperature at height h, K
+real ts   ! pot. Temperature at z0, K
+real qh   ! vapor at height h, g/g
+real qs   ! saturated vapor at z0, g/g
+real uh   ! zonal wind at height h, m/s
+real vh   ! merid wind at height h, m/s
+real h    ! height h, m
+real z0   ! surfase roughness, m
+
 ! Output:
 
 real shf   ! sensible heat flux (K m/s)
 real lhf   ! latent heat flux (m/s)
-real taux  ! zonal surface stress (N/m2)
-real tauy  ! merid surface stress (N/m2)
-real xlmo  ! Monin-Obukhov length
+real taux  ! zonal surface stress (m2/s2)
+real tauy  ! merid surface stress (m2/s2)
 
-real r, x, pii, zody, vel
-real a, b, c, d, ustar, tstar
-real xm, xh, xsi, xsi1, xsi2, dxsi, fm, fh
-integer iter
-real gm1, gh1, fm1, fh1
+! Local
 
-gm1(x)=(1.-15.*x)**0.25
-gh1(x)=sqrt(1.-9.*x)/0.74
-fm1(x)=2.*alog((1.+x)/2.)+alog((1.+x*x)/2.)-2.*atan(x)+pii
-fh1(x)=2.*alog((1.+0.74*x)/2.)
+real r     ! bulk Richardson number
+real pii, zodym, zodyh, vel
+real ustar, tstar, qstar
+real x, x0, xm0, xh0, xsi, xsim0, xsih0, xsi1, fm, fh, error
+real psim1, psim2, psim3, psim4, xx, yy, fm0
+real psih1, psih2, psih3, psih4
+real z0h, zTh, zt0
+real, parameter :: xsim = -1.574
+real, parameter :: xsih = -0.465
+real, parameter :: xm = sqrt(sqrt((1.-16.*xsim)))
+real, parameter :: xh = sqrt(sqrt((1.-16.*xsih)))
+real, parameter :: errormax = 0.0001
+integer, parameter :: nitermax = 20
+integer niter
 
-pii=acos(-1.)/2.
-zody=alog(h/z0)
+xx(yy) = sqrt(sqrt((1.-16.*yy)))
+! unstable: -1.574<xsi<0
+psim1(x,x0)=2.*log((1.+x)/(1+x0))+log((1.+x*x)/(1.+x0*x0))-2.*(atan(x)-atan(x0))
+psih1(x,x0)=2.*log((1.+x*x)/(1.+x0*x0))
+! very unstable:  xsi < -1.574
+psim2(xsi,xsim0,xm0) = log(xsim/xsim0)-psim1(xm,xm0)+1.14*((-xsi)**0.3333-(-xsim)**0.3333)
+psih2(xsi,xsih0,xh0) = log(xsih/xsih0)-psih1(xh,xh0)+0.8*((-xsi)**0.3333-(-xsih)**0.3333)
+! stable: 0 < xsi < 1
+psim3(xsi,xsim0) = -5.*(xsi-xsim0)
+psih3(xsi,xsih0) = -5.*(xsi-xsih0)
+! very stable: 0 < xsi < 1
+psim4(xsi,xsim0) = log(xsi**5/xsim0)+5.*(1.-xsim0)+xsi-1.
+psih4(xsi,xsih0) = log(xsi**5/xsih0)+5.*(1.-xsih0)+xsi-1.
 
-! vel = sqrt(max(0.5,uh**2+vh**2))
-vel = sqrt(max(0.01,uh**2+vh**2))  ! AW @ PNNL
-! r=min(0.25,9.81/ts*(th*(1+epsv*qh)-ts*(1.+epsv*qs))*h/vel**2)
-r=0  ! AW @ PNNL, 7/14/22
+vel = sqrt(max(0.0001,uh**2+vh**2))
+! r=max(-10.,min(0.19,9.81*((th-ts)/ts*(1.+0.61*qh)+0.61*(qh-qs))*h/vel**2))
+r=0.0
 
-iter=0
+! initial guess:
 
- 
+z0h=z0/h
+zt0 = 0.135*z0  ! roughness length for scalars
+zTh=zt0/h   ! (assume ln(z0/z0t) = 2.)
+zodym = log(1./z0h)
+zodyh = log(1./zTh)
 
-    xsi=0.
-	iter=iter+1
- 	xm=gm1(xsi)
-	xh=gh1(xsi)
-	fm=zody-fm1(xm)
-	fh=0.74*(zody-fh1(xh))
-	xsi1=r/fh*fm**2
-	dxsi=xsi-xsi1
-	xsi=xsi1
-
-    xsi=-abs(xsi)
-	iter=iter+1
- 	xm=gm1(xsi)
-	xh=gh1(xsi)
-	fm=zody-fm1(xm)
-	fh=0.74*(zody-fh1(xh))
-	xsi1=r/fh*fm**2
-	dxsi=xsi-xsi1
-	xsi=xsi1
-
-    xsi=-abs(xsi)
-	iter=iter+1
- 	xm=gm1(xsi)
-	xh=gh1(xsi)
-	fm=zody-fm1(xm)
-	fh=0.74*(zody-fh1(xh))
-	xsi1=r/fh*fm**2
-	dxsi=xsi-xsi1
-	xsi=xsi1
-
-!else
-!  	a=4.8*4.8*r-1.00*6.35
-!	b=(2.*r*4.8-1.00)*zody
-!	c=r*zody**2
-!	d=sqrt(b*b-4*a*c)
-!	xsi1=(-b+d)/a/2.
-!	xsi2=(-b-d)/a/2.
-!	xsi=amax1(xsi1,xsi2)
-!	fm=zody+4.8*xsi
-!	fh=1.00*(zody+7.8*xsi)
-!!  	a=4.7*4.7*r-0.74*6.35
-!!	b=(2.*r*4.7-0.74)*zody
-!!	c=r*zody**2
-!!	d=sqrt(b*b-4*a*c)
-!!	xsi1=(-b+d)/a/2.
-!!	xsi2=(-b-d)/a/2.
-!!	xsi=amax1(xsi1,xsi2)
-!!	fm=zody+4.7*xsi
-!!	fh=0.74*(zody+6.35*xsi)
-!end if
-
- 
-shf=0.4**2/fm/fh*vel*(ts-th)
-lhf=0.4**2/fm/fh*vel*(qs-qh)
-taux=-0.4**2/fm/fm*vel*uh*(p0*100./287./ts)
-tauy=-0.4**2/fm/fm*vel*vh*(p0*100./287./ts)
-      
-ustar = 0.4/fm*vel
-tstar = 0.4/fh*(th-ts)
-if(xsi.ge.0.) then
-   xsi = max(1.e-5,xsi)
+if(r.gt.0.) then
+ xsi = r*zodym/(1.-5.*r)
 else
-   xsi = min(-1.e-5,xsi)
+ xsi = r*zodym
 end if
-xlmo = h/xsi
+
+niter = 0
+error = 1000
+do while (error.gt.errormax.and.niter.lt.nitermax)
+
+xsi1 = xsi
+niter = niter + 1
+xsim0 = z0h*xsi
+xsih0 = zTh*xsi 
+
+if(xsi.lt.-0.01) then
+  if(xsi.ge.xsim) then
+    x = xx(xsi)
+    x0 = xx(xsim0)
+    fm = zodym-psim1(x,x0)
+  else
+    xm0 = xx(xsim0)
+    fm = psim2(xsi,xsim0,xm0)
+  end if
+  if(xsi.ge.xsih) then
+    x = xx(xsi)
+    x0 = xx(xsih0)
+    fh = zodyh-psih1(x,x0)
+  else
+    xh0 = xx(xsih0)
+    fh = psih2(xsi,xsih0,xh0)
+  end if
+elseif(xsi.gt.0.01) then
+  if(xsi.le.1.) then
+    fm = zodym-psim3(xsi,xsim0)
+    fh = zodyh-psih3(xsi,xsih0)
+  else
+    fm = psim4(xsi,xsim0)
+    fh = psih4(xsi,xsih0)
+  end if
+else
+  fm = zodym
+  fh = zodyh
+end if
+xsi = r*fm*fm/fh
+error = abs(xsi-xsi1)
+
+end do
+
+! limit fh and fh to avoid too large fluxes especially over large surface
+! roughness. Basically, make the maximum slowdown of the velocity not bigger
+! than ! 50% in one timestep.
+
+fm0 = sqrt(0.4**2*vel*dtn/0.5/h)
+fm = max(fm0,fm)
+fh = max(fh,fh/fm*fm0)
+
+shf = 0.4**2*vel/(fm*fh)*(ts-th)
+lhf = 0.4**2*vel/(fm*fh)*(qs-qh)
+taux=-0.4**2*vel/(fm*fm)*uh
+tauy=-0.4**2*vel/(fm*fm)*vh
 
 return
 end

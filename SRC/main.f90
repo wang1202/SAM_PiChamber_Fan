@@ -45,14 +45,14 @@ if(nrestart.eq.0) then
    day=day0 
    call setgrid() ! initialize vertical grid structure
    call setdata() ! initialize all variables
-   !call setdetector()
+   call setdetector()
 elseif(nrestart.eq.1) then
    call read_all()
    call setgrid() ! initialize vertical grid structure
    call diagnose()
    call sgs_init()
    call micro_init()  !initialize microphysics
-   !call setdetector()
+   call setdetector()
 elseif(nrestart.eq.2) then  ! branch run
    call read_all()
    call setgrid() ! initialize vertical grid structure
@@ -298,14 +298,14 @@ do while(nstep.lt.nstop.and.nelapse.gt.0)
 !  collect statistics, write save-file, etc.
 
 !  output for all detectors
-   !if (mod(nstep,ndetout).eq.0) then
-   !  dbuf=dbuf + 1
-     !call detector(dbuf)
-     !if (mod(nstep,nstat).eq.0) then
-     !   call detector_out()
-     !   dbuf = 0
-     !end if
-   !end if
+   if (mod(nstep,ndetout).eq.0) then
+    dbuf=dbuf + 1
+     call detector(dbuf)
+     if (mod(nstep,nstat).eq.0) then
+       call detector_out()
+       dbuf = 0
+     end if
+   end if
 
    call stepout(nstatsteps)
 

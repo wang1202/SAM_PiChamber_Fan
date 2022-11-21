@@ -25,7 +25,7 @@ real flux(nz)
 ! local        
 real flx(0:nx,0:ny,0:nzm)
 real dfdt(nx,ny,nz)
-real rdx2,rdy2,rdz2,rdz,rdx5,rdy5,rdz5,tmp
+real rdx2,rdy2,rdz2,rdx,rdy,rdz,rdx5,rdy5,rdz5,tmp
 real dxy,dxz,dyx,dyz,dzx,dzy,tkx,tky,tkz,rhoi
 real taux0, tauy0, xlmo
 real coef, coef1
@@ -38,6 +38,8 @@ if(.not.dosgs) return
 rdx2=1./(dx*dx)
 rdy2=1./(dy*dy)
 rdz2=1./(dz*dz)
+rdx=1./dx
+rdy=1./dy
 rdz=1./dz
 dxy=dx/dy
 dxz=dx/dz
@@ -59,14 +61,14 @@ if (dowallsflux) then
   do j=1,ny
   if(mod(rank,nsubdomains_x).eq.0) then
 !  left wall
-   flx(0,j,k)=fluxl(j,k)*rdz*rhow(k)
+   flx(0,j,k)=fluxl(j,k)*rdx
   else
    tkx=rdx5*(tkh(1,j,k)+tkh(0,j,k))
    flx(0,j,k)=-tkx*(field(1,j,k)-field(0,j,k))
   end if
 
   if(mod(rank,nsubdomains_x).eq.nsubdomains_x-1) then
-   flx(nx,j,k)=fluxr(j,k)*rdz*rhow(k)
+   flx(nx,j,k)=fluxr(j,k)*rdx
 !  right wall
   else
    tkx=rdx5*(tkh(nx+1,j,k)+tkh(nx,j,k))
@@ -93,7 +95,7 @@ if (dowallsflux) then
   do i=1,nx
   if(rank.lt.nsubdomains_x) then
 !  front wall
-   flx(i,0,k)=fluxq(i,k)*rdz*rhow(k)
+   flx(i,0,k)=fluxq(i,k)*rdy
   else
    tky=rdy5*(tkh(i,0,k)+tkh(i+1,0,k))
    flx(i,0,k)=-tky*(field(i,1,k)-field(i,0,k))
@@ -101,7 +103,7 @@ if (dowallsflux) then
 
   if(rank.gt.nsubdomains-nsubdomains_x-1) then
 !  back wall
-   flx(i,ny,k)=fluxh(i,k)*rdz*rhow(k)
+   flx(i,ny,k)=fluxh(i,k)*rdy
   else
    tky=rdy5*(tkh(i,ny+1,k)+tkh(i,ny,k))
    flx(i,ny,k)=-tky*(field(i,ny+1,k)-field(i,ny,k))
@@ -204,7 +206,7 @@ end if ! end of dowallx/dowally
 
 flux(1) = 0.
 flux(nzm)=0.
-tmp=1./adzw(nz)
+tmp=1./adzw(nzm)
 do j=1,ny
  do i=1,nx	
    flx(i,j,0)=fluxb(i,j)*rdz*rhow(1)

@@ -62,7 +62,7 @@ real::   fluxt0 =0.  ! surface sensible flux, Km/s
 real::   fluxq0 =0.  ! surface latent flux, m/s
 real::   tau0   =0.  ! surface stress, m2/s2
 !real::   z0     =0.035	! roughness length
-real::   z0     =0.0003	! roughness length
+real::   z0     =0.003	! roughness length
 !real::   z0     =0.01	! roughness length
 real::   soil_wetness =0.0 ! wetness coeff for soil (from 0 to 1.)
 integer:: ocean_type =0 ! type of SST forcing
@@ -150,5 +150,5 @@ integer :: ndet_thermistors = 2
 integer :: ndet_virtual = 0
 integer :: pdet = 6
 integer :: idet = 5
-integer :: ndetout = 10
+integer :: ndetout = 1
 end module params

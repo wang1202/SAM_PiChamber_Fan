@@ -280,19 +280,21 @@ implicit none
 
 real, intent(out) :: cfl
 
-integer k
-real tkhmax(nz)
+integer j,k
+real tkhxmax(nzm),tkhmax(nzm)
 
+tkhxmax(:) = 0.
 do k = 1,nzm
  tkhmax(k) = maxval(tkh(1:nx,1:ny,k))
+ tkhxmax(k) = max(tkhxmax(k),maxval(tkh(:,:,k)*grdf_x(k)))
 end do
 
 cfl = 0.
 do k=1,nzm
   cfl = max(cfl,        &
-     0.5*tkhmax(k)*grdf_z(k)*dt/(dz*adzw(k))**2, &
-     0.5*tkhmax(k)*grdf_x(k)*dt/dx**2, &
-     YES3D*0.5*tkhmax(k)*grdf_y(k)*dt/dy**2)
+     tkhmax(k)*grdf_z(k)*dt/(dz*adzw(k))**2, &
+     tkhxmax(k)*dt/dx**2, &
+     YES3D*tkhmax(k)*grdf_y(k)*dt/dy**2)
 end do
 
 end subroutine kurant_sgs
@@ -333,8 +335,8 @@ subroutine sgs_scalars()
                            t2lediff,t2lediss,twlediff,.true.)
     
       if(advect_sgs) then
-         call diffuse_scalar(tke,fzero,fzero,fzero,fzero, &
-                                 fzero,fzero,dummy,sgswsb, &
+         call diffuse_scalar(tke,fzerotb,fzerotb,fzerolr,fzerolr, &
+                                 fzeroqh,fzeroqh,dummy,sgswsb, &
                                     dummy,dummy,dummy,.false.)
       end if
 

@@ -38,7 +38,7 @@ else
 
   if(ntasks.ne.nsubdomains) then
     if(rank.eq.0) print *,'number of processors is not equal to nsubdomains!',&
-             '  ntasks=',ntasks,'   nsubdomains=',nsubdomains,'   nsubdomains_x=',nsubdomains_x,'   nsubdomains_y=',nsubdomains_y
+             '  ntasks=',ntasks,'   nsubdomains=',nsubdomains
     call task_abort() 
   endif
         

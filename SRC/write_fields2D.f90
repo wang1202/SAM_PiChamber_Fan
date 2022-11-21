@@ -560,7 +560,7 @@ end if
    nfields1=nfields1+1
    do j=1,ny
     do i=1,nx
-      tmp(i,j,1)=shft_xy(i,j)*rhow(1)*cp*coef
+      tmp(i,j,1)=shft_xy(i,j)*rhow(nz)*cp*coef
       shft_xy(i,j) = 0.
     end do
    end do
@@ -572,7 +572,7 @@ end if
    nfields1=nfields1+1
    do j=1,ny
     do i=1,nx
-      tmp(i,j,1)=lhft_xy(i,j)*rhow(1)*lcond*coef
+      tmp(i,j,1)=lhft_xy(i,j)*rhow(nz)*lcond*coef
       lhft_xy(i,j) = 0.
     end do
    end do
@@ -585,7 +585,7 @@ end if
    nfields1=nfields1+1
    do k=1,nzm
     do j=1,ny
-      tmp_lr(1,j,k)=shfl_yz(j,k)*rhow(k)*cp*coef
+      tmp_lr(1,j,k)=shfl_yz(j,k)*rho(k)*cp*coef
       shfl_yz(j,k) = 0.
     end do
    end do
@@ -597,7 +597,7 @@ end if
    nfields1=nfields1+1
    do k=1,nzm
     do j=1,ny
-      tmp_lr(1,j,k)=lhfl_yz(j,k)*rhow(k)*lcond*coef
+      tmp_lr(1,j,k)=lhfl_yz(j,k)*rho(k)*lcond*coef
       lhfl_yz(j,k) = 0.
     end do
    end do
@@ -610,7 +610,7 @@ end if
    nfields1=nfields1+1
    do k=1,nzm
     do j=1,ny
-      tmp_lr(1,j,k)=shfr_yz(j,k)*rhow(k)*cp*coef
+      tmp_lr(1,j,k)=shfr_yz(j,k)*rho(k)*cp*coef
       shfr_yz(j,k) = 0.
     end do
    end do
@@ -622,7 +622,7 @@ end if
    nfields1=nfields1+1
    do k=1,nzm
     do j=1,ny
-      tmp_lr(1,j,k)=lhfr_yz(j,k)*rhow(k)*lcond*coef
+      tmp_lr(1,j,k)=lhfr_yz(j,k)*rho(k)*lcond*coef
       lhfr_yz(j,k) = 0.
     end do
    end do
@@ -635,7 +635,7 @@ end if
    nfields1=nfields1+1
    do k=1,nzm
     do i=1,nx
-      tmp_qh(i,1,k)=shfq_xz(i,k)*rhow(k)*cp*coef
+      tmp_qh(i,1,k)=shfq_xz(i,k)*rho(k)*cp*coef
       shfq_xz(i,k) = 0.
     end do
    end do
@@ -647,7 +647,7 @@ end if
    nfields1=nfields1+1
    do k=1,nzm
     do i=1,nx
-      tmp_qh(i,1,k)=lhfq_xz(i,k)*rhow(k)*lcond*coef
+      tmp_qh(i,1,k)=lhfq_xz(i,k)*rho(k)*lcond*coef
       lhfq_xz(i,k) = 0.
     end do
    end do
@@ -660,7 +660,7 @@ end if
    nfields1=nfields1+1
    do k=1,nzm
     do i=1,nx
-      tmp_qh(i,1,k)=shfh_xz(i,k)*rhow(k)*cp*coef
+      tmp_qh(i,1,k)=shfh_xz(i,k)*rho(k)*cp*coef
       shfh_xz(i,k) = 0.
     end do
    end do
@@ -672,7 +672,7 @@ end if
    nfields1=nfields1+1
    do k=1,nzm
     do i=1,nx
-      tmp_qh(i,1,k)=lhfh_xz(i,k)*rhow(k)*lcond*coef
+      tmp_qh(i,1,k)=lhfh_xz(i,k)*rho(k)*lcond*coef
       lhfh_xz(i,k) = 0.
     end do
    end do

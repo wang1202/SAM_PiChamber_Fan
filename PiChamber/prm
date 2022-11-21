@@ -10,7 +10,7 @@ wall_loss_time_scale = 600.0
 
 
 &SGS_TKE
-dosmagor = .true.
+dosmagor = .false.
 /
 
  &PARAMETERS
