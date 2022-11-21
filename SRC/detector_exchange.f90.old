@@ -1,0 +1,33 @@
+subroutine detector_exchange()
+use vars
+use params
+include 'mpif.h'
+integer i,j
+integer :: tag
+integer status(MPI_STATUS_SIZE)
+integer rki,ierr
+integer pstart
+call t_startf('detector_exchange')
+do i=1,ndet
+ rki=plocation(i,2)
+ tag=88+i
+ pstart=(i-1)*pdet+1
+ if (rank.eq.rki) then
+!  print*,pdet
+  do j=0,nsubdomains-1
+   if (j.ne.rank) then
+!    call task_bsend_float(j,det1,nzm,88)
+    call MPI_Send(det1(pstart:pstart+pdet-1),pdet,MPI_DOUBLE,j,tag, &
+                    MPI_COMM_WORLD,ierr)
+   end if
+  end do
+ end if
+ if (rank.ne.rki) then
+!  call task_breceive_float(det1,nzm,rki,88)
+  call MPI_Recv(det1(pstart:pstart+pdet-1),pdet,MPI_DOUBLE,rki,tag, &
+          MPI_COMM_WORLD, status, ierr)
+ end if
+end do
+call MPI_Barrier(MPI_COMM_WORLD,ierr)
+call t_stopf('detector_exchange')
+end subroutine
