@@ -188,11 +188,11 @@ if(.not.SFC_FLX_FXD) then
 ! non-constant top surface flux
                  qvs(0:nx,1-YES3D:ny) = micro_field(0:nx,1-YES3D:ny,nzm,index_water_vapor)
                  do j=1,ny
-                   jb = max(1,j-YES3D)
-                   jt = min(ny,j+YES3D) 
+                   jb = j-YES3D
+                   jt = j+YES3D
                    do i=1,nx
-                     ib = max(1,i-1)
-                     it = min(nx,i+1)
+                     ib = i-1
+                     it = i+1
                      call landflx(t_s,(t(i,j,nzm)-gamaz(nzm))*coef1,  &
                        q_s,qv(i,j,nzm), 0.5*(u(it,j,nzm)+u(i,j,nzm))+ug,       &
                        0.5*(v(i,jt,nzm)+v(i,j,nzm))+vg, z(1), z0,          &
@@ -205,8 +205,8 @@ if(.not.SFC_FLX_FXD) then
                        z(1), z0,fluxt0, fluxq0, taux0, tauy0)
                      fluxtu(i,j)= -taux0
                
-                     call landflx(t_s,(0.5*(t(i,j-YES3D,nzm)+t(i,j,nzm))-gamaz(nzm))*coef1, & 
-                       q_s, 0.5*(qvs(i,j-YES3D)+qvs(i,j)), &
+                     call landflx(t_s,(0.5*(t(i,jb,nzm)+t(i,j,nzm))-gamaz(nzm))*coef1, & 
+                       q_s, 0.5*(qvs(i,jb)+qvs(i,j)), &
                        0.25*(u(i,j,nzm)+u(it,j,nzm)+u(i,jb,nzm)+u(it,jb,nzm))+ug, &
                        v(i,j,nzm)+vg, &
                        z(1), z0,fluxt0, fluxq0, taux0, tauy0)
@@ -222,13 +222,13 @@ if(dowallx) then
 ! left wall flux
    qvy(1-YES3D:ny,:) = micro_field(1,1-YES3D:ny,:,index_water_vapor)
 ! set soil_wetness to 0.0 for dry side walls
-  soil_wetness= 0.62
+  soil_wetness= 0.61
   if(mod(rank,nsubdomains_x).eq.0) then
     do k=1,nzm
      kb = max(1,k-1)   
      do j=1,ny
-       jb = max(1,j-YES3D)
-       jt = min(ny,j+YES3D)
+       jb = j-YES3D
+       jt = j+YES3D
        coef = (1000./pres(k))**(rgas/cp)     ! AW: this assumes that the pressure at the wall is the same as lower boundary
        coef1 = (1000./pres(k))**(rgas/cp)
        t_s = tabs_w*coef                   ! AW: see above.  For the side wall it should be mutiplied by coef1.
@@ -240,12 +240,12 @@ if(dowallx) then
        fluxlt(j,k) = fluxt0
        fluxlq(j,k) = fluxq0
        call landflxSW((0.5*(t(1,j,k)+t(1,jb,k))-gamaz(k))*coef1, & ! AW: for V-grid
-            t_s, 0.5*(qvy(j,k)+qvy(j-YES3D,k)), q_s, v(i,j,k)+vg,     &  ! AW: why is t and qvy treated differently as j = 1?
+            t_s, 0.5*(qvy(j,k)+qvy(j-YES3D,k)), q_s, v(1,j,k)+vg,     &  ! AW: why is t and qvy treated differently as j = 1?
             0.25*(w(1,jb,k)+w(1,jb,k+1)+w(1,j,k+1)+w(1,j,k)), &
             z(1), z0,fluxt0, fluxq0, taux0, tauy0)
        fluxlv(j,k)=taux0
 
-       call landflxSW((0.5*(t(1,j,k)+t(1,j,kb))-gamaz(k))*coef1, & ! AW: for W-grid
+       call landflxSW((0.5*(t(1,j,k)+t(1,j,kb))-gamaz(k))*coef1, & ! AW: for W-grid, here it's okay to use kb because w(1) doesn't matter
             t_s, 0.5*(qvy(j,k)+qvy(j,kb)), q_s, &
             0.25*(v(1,j,k)+v(1,j,kb)+v(1,jt,k)+v(1,jt,kb))+vg, &
             w(1,j,k), &
@@ -261,8 +261,8 @@ if(dowallx) then
    do k=1,nzm
      kb = max(1,k-1) 
      do j=1,ny
-       jb = max(1,ny-YES3D)
-       jt = min(ny,ny+YES3D)
+       jb = j-YES3D
+       jt = j+YES3D
        coef = (1000./pres(k))**(rgas/cp)
        coef1 = (1000./pres(k))**(rgas/cp)
        t_s = tabs_w*coef
@@ -298,16 +298,15 @@ if(dowally) then
 ! front wall flux
 ! soil_Wetness set to 0.0 for side walls, to assume it is not saturated
 ! ST 2018
-  soil_wetness= 0.62
+  soil_wetness= 0.61
   if(rank.lt.nsubdomains_x) then   
     qvx(0:nx,:) = micro_field(0:nx,1,:,index_water_vapor)
 
     do k=1,nzm
      kb = max(1,k-1)
-     kt = min(nzm,k+1)  
      do i=1,nx
-       ib = max(1,i-1)
-       it = min(nx,i+1) 
+       ib = i-1
+       it = i+1
        coef = (1000./pres0)**(rgas/cp)
        coef1 = (1000./pres(k))**(rgas/cp)
        t_s = tabs_w*coef
@@ -337,16 +336,15 @@ if(dowally) then
     qvx(0:nx,:) = micro_field(0:nx,ny,:,index_water_vapor)
     do k=1,nzm
      kb = max(1,k-1)
-     kt = min(nzm,k+1)  
      do i=1,nx
-       ib = max(1,i-1)
-       it = min(nx,i+1) 
+       ib = i-1
+       it = i+1
        coef = (1000./pres0)**(rgas/cp)
        coef1 = (1000./pres(k))**(rgas/cp)
        t_s = tabs_w*coef
        q_s = soil_wetness*qsatw(tabs_w,pres(k))
        call landflxSW((t(i,ny,k)-gamaz(k))*coef1, t_s, &
-                   qv(i,ny,k), q_s, 0.5*(w(i,ny,k)+w(i,ny,kt)), &
+                   qv(i,ny,k), q_s, 0.5*(w(i,ny,k)+w(i,ny,k+1)), &
                    0.5*(u(i,ny,k)+u(it,ny,k)),z(1),z0, &
                    fluxt0, fluxq0, taux0, tauy0)
        fluxht(i,k) = - fluxt0
