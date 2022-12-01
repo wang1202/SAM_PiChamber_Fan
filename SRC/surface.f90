@@ -135,7 +135,7 @@ if(.not.SFC_FLX_FXD) then
                 
                else
 ! non-constant surface flux
-                 qvs(0:nx,1-YES3D:ny) = micro_field(0:nx,1-YES3D:ny,1,index_water_vapor)
+                 qvs(0:nx,1-YES3D:ny) = micro_field(0:nx,1-YES3D:ny,1,index_water_vapor) ! index_water_vapor = 1, which is total water instead of qv.  AW@PNNL
                  do j=1,ny
                    do i=1,nx
                      call landflx((t(i,j,1)-gamaz(1))*coef1, t_s,  &
@@ -146,13 +146,13 @@ if(.not.SFC_FLX_FXD) then
                      fluxbq(i,j) = fluxq0
 
                call landflx((0.5*(t(i,j,1)+t(i-1,j,1))-gamaz(1))*coef1, & 
-                      t_s, 0.5*(qvs(i,j)+qvs(i-1,j)), q_s, u(i,j,1)+ug,     &
+                      t_s, 0.5*(qv(i,j,1)+qv(i-1,j,1)), q_s, u(i,j,1)+ug,     & ! qv instead of qvs should be used here.  AW@PNNL
                       0.25*(v(i-1,j+YES3D,1)+v(i-1,j,1)+v(i,j+YES3D,1)+v(i,j,1))+vg, &
                       z(1), z0,fluxt0, fluxq0, taux0, tauy0)
                fluxbu(i,j)=taux0
                
                call landflx((0.5*(t(i,j-YES3D,1)+t(i,j,1))-gamaz(1))*coef1, & 
-                      t_s, 0.5*(qvs(i,j-YES3D)+qvs(i,j)), q_s, &
+                      t_s, 0.5*(qv(i,j-YES3D,1)+qv(i,j,1)), q_s, & ! qv instead of qvs should be used here.  AW@PNNL
                       0.25*(u(i,j,1)+u(i+1,j,1)+u(i,j-YES3D,1)+u(i+1,j-YES3D,1))+ug, &
                       v(i,j,1)+vg, &
                       z(1), z0,fluxt0, fluxq0, taux0, tauy0)
@@ -186,7 +186,7 @@ if(.not.SFC_FLX_FXD) then
                  fluxtv(:,:) = - tauy0
                else
 ! non-constant top surface flux
-                 qvs(0:nx,1-YES3D:ny) = micro_field(0:nx,1-YES3D:ny,nzm,index_water_vapor)
+                 qvs(0:nx,1-YES3D:ny) = micro_field(0:nx,1-YES3D:ny,nzm,index_water_vapor) ! index_water_vapor = 1, which is total water instead of qv.  AW@PNNL
                  do j=1,ny
                    jb = j-YES3D
                    jt = j+YES3D
@@ -200,13 +200,13 @@ if(.not.SFC_FLX_FXD) then
                      fluxtt(i,j) = fluxt0
                      fluxtq(i,j) = fluxq0
                      call landflx(t_s,(0.5*(t(i,j,nzm)+t(ib,j,nzm))-gamaz(nzm))*coef1, & 
-                       q_s, 0.5*(qvs(i,j)+qvs(i-1,j)), u(i,j,nzm)+ug,     &
+                       q_s, 0.5*(qv(i,j,nzm)+qv(i-1,j,nzm)), u(i,j,nzm)+ug,     & ! qv instead of qvs should be used here.  AW@PNNL
                        0.25*(v(ib,jt,nzm)+v(ib,j,nzm)+v(i,jt,nzm)+v(i,j,nzm))+vg, &
                        z(1), z0,fluxt0, fluxq0, taux0, tauy0)
                      fluxtu(i,j)= -taux0
                
                      call landflx(t_s,(0.5*(t(i,jb,nzm)+t(i,j,nzm))-gamaz(nzm))*coef1, & 
-                       q_s, 0.5*(qvs(i,jb)+qvs(i,j)), &
+                       q_s, 0.5*(qv(i,jb,nzm)+qv(i,j,nzm)), & ! qv instead of qvs should be used here.  AW@PNNL
                        0.25*(u(i,j,nzm)+u(it,j,nzm)+u(i,jb,nzm)+u(it,jb,nzm))+ug, &
                        v(i,j,nzm)+vg, &
                        z(1), z0,fluxt0, fluxq0, taux0, tauy0)
@@ -220,7 +220,7 @@ if(.not.SFC_FLX_FXD) then
 ! FY @ MTU 2017
 if(dowallx) then
 ! left wall flux
-   qvy(1-YES3D:ny,:) = micro_field(1,1-YES3D:ny,:,index_water_vapor)
+   qvy(1-YES3D:ny,:) = micro_field(1,1-YES3D:ny,:,index_water_vapor) ! index_water_vapor = 1, which is total water instead of qv.  AW@PNNL
 ! set soil_wetness to 0.0 for dry side walls
   soil_wetness= 0.61
   if(mod(rank,nsubdomains_x).eq.0) then
@@ -229,24 +229,24 @@ if(dowallx) then
      do j=1,ny
        jb = j-YES3D
        jt = j+YES3D
-       coef = (1000./pres(k))**(rgas/cp)     ! AW: this assumes that the pressure at the wall is the same as lower boundary
+       coef = (1000./pres(k))**(rgas/cp)
        coef1 = (1000./pres(k))**(rgas/cp)
-       t_s = tabs_w*coef                   ! AW: see above.  For the side wall it should be mutiplied by coef1.
+       t_s = tabs_w*coef
        q_s = soil_wetness*qsatw(tabs_w,pres(k))
-       call landflxSW((t(1,j,k)-gamaz(k))*coef1, t_s, & ! AW: so t_h and t_s are different, not neutral.
+       call landflxSW((t(1,j,k)-gamaz(k))*coef1, t_s, &
                    qv(1,j,k), q_s, 0.5*(v(1,j,k)+v(1,jt,k)), &
                    0.5*(w(1,j,k)+w(1,j,k+1)),z(1),z0, &
                    fluxt0, fluxq0, taux0, tauy0)
        fluxlt(j,k) = fluxt0
        fluxlq(j,k) = fluxq0
-       call landflxSW((0.5*(t(1,j,k)+t(1,jb,k))-gamaz(k))*coef1, & ! AW: for V-grid
-            t_s, 0.5*(qvy(j,k)+qvy(j-YES3D,k)), q_s, v(1,j,k)+vg,     &  ! AW: why is t and qvy treated differently as j = 1?
+       call landflxSW((0.5*(t(1,j,k)+t(1,jb,k))-gamaz(k))*coef1, &
+            t_s, 0.5*(qv(1,j,k)+qv(1,j-YES3D,k)), q_s, v(1,j,k)+vg,     & ! qv instead of qvy should be used here.  AW@PNNL
             0.25*(w(1,jb,k)+w(1,jb,k+1)+w(1,j,k+1)+w(1,j,k)), &
             z(1), z0,fluxt0, fluxq0, taux0, tauy0)
        fluxlv(j,k)=taux0
 
-       call landflxSW((0.5*(t(1,j,k)+t(1,j,kb))-gamaz(k))*coef1, & ! AW: for W-grid, here it's okay to use kb because w(1) doesn't matter
-            t_s, 0.5*(qvy(j,k)+qvy(j,kb)), q_s, &
+       call landflxSW((0.5*(t(1,j,k)+t(1,j,kb))-gamaz(k))*coef1, &
+            t_s, 0.5*(qv(1,j,k)+qv(1,j,kb)), q_s, & ! qv instead of qvy should be used here.  AW@PNNL
             0.25*(v(1,j,k)+v(1,j,kb)+v(1,jt,k)+v(1,jt,kb))+vg, &
             w(1,j,k), &
             z(1), z0,fluxt0, fluxq0, taux0, tauy0)
@@ -257,7 +257,7 @@ if(dowallx) then
 
 ! right wall flux
   if(mod(rank,nsubdomains_x).eq.nsubdomains_x-1) then
-   qvy(1-YES3D:ny,:) = micro_field(nx,1-YES3D:ny,:,index_water_vapor)
+   qvy(1-YES3D:ny,:) = micro_field(nx,1-YES3D:ny,:,index_water_vapor) ! index_water_vapor = 1, which is total water instead of qv.  AW@PNNL
    do k=1,nzm
      kb = max(1,k-1) 
      do j=1,ny
@@ -276,13 +276,13 @@ if(dowallx) then
        fluxrt(j,k) = - fluxt0
        fluxrq(j,k) = - fluxq0
        call landflxSW((0.5*(t(nx,j,k)+t(nx,jb,k))-gamaz(k)*coef1), & 
-            t_s, 0.5*(qvy(j,k)+qvy(j-YES3D,k)), q_s, v(nx,j,k)+vg,     &
+            t_s, 0.5*(qv(nx,j,k)+qv(nx,j-YES3D,k)), q_s, v(nx,j,k)+vg,     & ! qv instead of qvy should be used here.  AW@PNNL
             0.25*(w(nx,jb,k)+w(nx,jb,k+1)+w(nx,j,k+1)+w(nx,j,k)), &
             z(1), z0,fluxt0, fluxq0, taux0, tauy0)
        fluxrv(j,k)=-taux0
 
        call landflxSW((0.5*(t(nx,j,k)+t(nx,j,kb))-gamaz(k))*coef1, & 
-            t_s, 0.5*(qvy(j,k)+qvy(j,kb)), q_s, &
+            t_s, 0.5*(qv(nx,j,k)+qv(nx,j,kb)), q_s, & ! qv instead of qvy should be used here.  AW@PNNL
             0.25*(v(nx,j,k)+v(nx,j,kb)+v(nx,jt,k)+v(nx,jt,kb))+vg, &
             w(nx,j,k), &
             z(1), z0,fluxt0, fluxq0, taux0, tauy0)
@@ -300,7 +300,7 @@ if(dowally) then
 ! ST 2018
   soil_wetness= 0.61
   if(rank.lt.nsubdomains_x) then   
-    qvx(0:nx,:) = micro_field(0:nx,1,:,index_water_vapor)
+    qvx(0:nx,:) = micro_field(0:nx,1,:,index_water_vapor) ! index_water_vapor = 1, which is total water instead of qv.  AW@PNNL
 
     do k=1,nzm
      kb = max(1,k-1)
@@ -318,12 +318,12 @@ if(dowally) then
        fluxqt(i,k) = fluxt0
        fluxqq(i,k) = fluxq0
        call landflxSW((0.5*(t(i,1,k)+t(i,1,kb))-gamaz(k))*coef1, & 
-            t_s, 0.5*(qvx(i,k)+qvx(i,kb)), q_s, w(i,1,k),     &
+            t_s, 0.5*(qv(i,1,k)+qv(i,1,kb)), q_s, w(i,1,k),     & ! qv instead of qvx should be used here.  AW@PNNL
             0.25*(u(i,1,k)+u(it,1,k)+u(it,1,kb)+u(i,1,kb))+ug, &
             z(1), z0,fluxt0, fluxq0, taux0, tauy0)
        fluxqw(i,k)=taux0
        call landflxSW((0.5*(t(i,1,k)+t(i-1,1,k))-gamaz(k))*coef1, & 
-            t_s, 0.5*(qvx(i,k)+qvx(i-1,k)), q_s, &
+            t_s, 0.5*(qv(i,1,k)+qv(i-1,1,k)), q_s, & ! qv has been correctly applied here...  AW@PNNL
             0.25*(w(i,1,k)+w(i,1,k+1)+w(ib,1,k)+w(ib,1,k+1)), &
             u(i,1,k)+ug, &
             z(1), z0,fluxt0, fluxq0, taux0, tauy0)
@@ -333,7 +333,7 @@ if(dowally) then
   end if
 ! back wall flux
   if(rank.gt.nsubdomains-nsubdomains_x-1) then
-    qvx(0:nx,:) = micro_field(0:nx,ny,:,index_water_vapor)
+    qvx(0:nx,:) = micro_field(0:nx,ny,:,index_water_vapor) ! index_water_vapor = 1, which is total water instead of qv.  AW@PNNL
     do k=1,nzm
      kb = max(1,k-1)
      do i=1,nx
@@ -350,12 +350,12 @@ if(dowally) then
        fluxht(i,k) = - fluxt0
        fluxhq(i,k) = - fluxq0
        call landflxSW((0.5*(t(i,ny,k)+t(i,ny,kb))-gamaz(k))*coef1, & 
-            t_s, 0.5*(qvx(i,k)+qvx(i,kb)), q_s, w(i,ny,k),     &
+            t_s, 0.5*(qv(i,ny,k)+qv(i,ny,kb)), q_s, w(i,ny,k),     & ! qv instead of qvx should be used here.  AW@PNNL
             0.25*(u(i,ny,k)+u(it,ny,k)+u(it,ny,kb)+u(i,ny,kb))+ug, &
             z(1), z0,fluxt0, fluxq0, taux0, tauy0)
        fluxhw(i,k)= - taux0
        call landflxSW((0.5*(t(ib,ny,k)+t(i,ny,k))-gamaz(k))*coef1, & 
-            t_s, 0.5*(qvx(i-1,k)+qvx(i,k)), q_s, &
+            t_s, 0.5*(qv(i-1,ny,k)+qv(i,ny,k)), q_s, & ! qv instead of qvx should be used here.  AW@PNNL
             0.25*(w(i,ny,k)+w(i,ny,k+1)+w(ib,ny,k)+w(ib,ny,k+1)), &
             u(i,ny,k)+ug, &
             z(1), z0,fluxt0, fluxq0, taux0, tauy0)
